@@ -102,12 +102,13 @@ func ResourceWebACL() *schema.Resource {
 								Schema: map[string]*schema.Schema{
 									"allow":     allowConfigSchema(),
 									"block":     blockConfigSchema(),
-									"captcha":   captchaConfigSchema(),
+									"captcha":   captchaActionSchema(),
 									"challenge": challengeConfigSchema(),
 									"count":     countConfigSchema(),
 								},
 							},
 						},
+						"captcha_config": captchaConfigSchema(),
 						"name": {
 							Type:         schema.TypeString,
 							Required:     true,

@@ -33,6 +33,7 @@ func expandRule(m map[string]interface{}) *wafv2.Rule {
 		Name:             aws.String(m["name"].(string)),
 		Priority:         aws.Int64(int64(m["priority"].(int))),
 		Action:           expandRuleAction(m["action"].([]interface{})),
+		CaptchaConfig:    expandCaptchaConfig(m["captcha_config"].([]interface{})),
 		Statement:        expandRuleGroupRootStatement(m["statement"].([]interface{})),
 		VisibilityConfig: expandVisibilityConfig(m["visibility_config"].([]interface{})),
 	}
@@ -150,6 +151,44 @@ func expandCaptchaAction(l []interface{}) *wafv2.CaptchaAction {
 	}
 
 	return action
+}
+
+func expandCaptchaConfig(l []interface{}) *wafv2.CaptchaConfig {
+	captchaConfig := &wafv2.CaptchaConfig{}
+
+	if len(l) == 0 || l[0] == nil {
+		return captchaConfig
+	}
+
+	m, ok := l[0].(map[string]interface{})
+	if !ok {
+		return captchaConfig
+	}
+
+	if v, ok := m["immunity_time"].([]interface{}); ok && len(v) > 0 {
+		captchaConfig.ImmunityTimeProperty = expandImmunityTime(v)
+	}
+
+	return captchaConfig
+}
+
+func expandImmunityTime(l []interface{}) *wafv2.ImmunityTimeProperty {
+	immunity := &wafv2.ImmunityTimeProperty{}
+
+	if len(l) == 0 || l[0] == nil {
+		return immunity
+	}
+
+	m, ok := l[0].(map[string]interface{})
+	if !ok {
+		return immunity
+	}
+
+	if v, ok := m["immunity_time"].(int); ok && v > 0 {
+		immunity.ImmunityTime = aws.Int64(int64(v))
+	}
+
+	return immunity
 }
 
 func expandChallengeAction(l []interface{}) *wafv2.ChallengeAction {
@@ -851,6 +890,7 @@ func expandWebACLRule(m map[string]interface{}) *wafv2.Rule {
 		Name:             aws.String(m["name"].(string)),
 		Priority:         aws.Int64(int64(m["priority"].(int))),
 		Action:           expandRuleAction(m["action"].([]interface{})),
+		CaptchaConfig:    expandCaptchaConfig(m["captcha_config"].([]interface{})),
 		OverrideAction:   expandOverrideAction(m["override_action"].([]interface{})),
 		Statement:        expandWebACLRootStatement(m["statement"].([]interface{})),
 		VisibilityConfig: expandVisibilityConfig(m["visibility_config"].([]interface{})),
@@ -1204,6 +1244,7 @@ func flattenRules(r []*wafv2.Rule) interface{} {
 	for i, rule := range r {
 		m := make(map[string]interface{})
 		m["action"] = flattenRuleAction(rule.Action)
+		m["captcha_config"] = flattenCaptchaConfig(rule.CaptchaConfig)
 		m["name"] = aws.StringValue(rule.Name)
 		m["priority"] = int(aws.Int64Value(rule.Priority))
 		m["rule_label"] = flattenRuleLabels(rule.RuleLabels)
@@ -1231,7 +1272,7 @@ func flattenRuleAction(a *wafv2.RuleAction) interface{} {
 	}
 
 	if a.Captcha != nil {
-		m["captcha"] = flattenCaptcha(a.Captcha)
+		m["captcha"] = flattenCaptchaAction(a.Captcha)
 	}
 
 	if a.Challenge != nil {
@@ -1272,7 +1313,7 @@ func flattenBlock(a *wafv2.BlockAction) []interface{} {
 	return []interface{}{m}
 }
 
-func flattenCaptcha(a *wafv2.CaptchaAction) []interface{} {
+func flattenCaptchaAction(a *wafv2.CaptchaAction) []interface{} {
 	if a == nil {
 		return []interface{}{}
 	}
@@ -1281,6 +1322,34 @@ func flattenCaptcha(a *wafv2.CaptchaAction) []interface{} {
 
 	if a.CustomRequestHandling != nil {
 		m["custom_request_handling"] = flattenCustomRequestHandling(a.CustomRequestHandling)
+	}
+
+	return []interface{}{m}
+}
+
+func flattenCaptchaConfig(c *wafv2.CaptchaConfig) []interface{} {
+	if c == nil {
+		return []interface{}{}
+	}
+
+	m := map[string]interface{}{}
+
+	if c.ImmunityTimeProperty != nil {
+		m["immunity_time"] = flattenImmunityTime(c.ImmunityTimeProperty)
+	}
+
+	return []interface{}{m}
+}
+
+func flattenImmunityTime(i *wafv2.ImmunityTimeProperty) []interface{} {
+	if i == nil {
+		return []interface{}{}
+	}
+
+	m := map[string]interface{}{}
+
+	if i.ImmunityTime != nil {
+		m["immunity_time"] = int(aws.Int64Value(i.ImmunityTime))
 	}
 
 	return []interface{}{m}
@@ -1955,6 +2024,7 @@ func flattenWebACLRules(r []*wafv2.Rule) interface{} {
 	for i, rule := range r {
 		m := make(map[string]interface{})
 		m["action"] = flattenRuleAction(rule.Action)
+		m["captcha_config"] = flattenCaptchaConfig(rule.CaptchaConfig)
 		m["override_action"] = flattenOverrideAction(rule.OverrideAction)
 		m["name"] = aws.StringValue(rule.Name)
 		m["priority"] = int(aws.Int64Value(rule.Priority))

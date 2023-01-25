@@ -94,7 +94,7 @@ func ResourceRuleGroup() *schema.Resource {
 									"allow":   allowConfigSchema(),
 									"block":   blockConfigSchema(),
 									"count":   countConfigSchema(),
-									"captcha": captchaConfigSchema(),
+									"captcha": captchaActionSchema(),
 								},
 							},
 						},

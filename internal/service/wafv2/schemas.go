@@ -536,7 +536,7 @@ func allowConfigSchema() *schema.Schema {
 	}
 }
 
-func captchaConfigSchema() *schema.Schema {
+func captchaActionSchema() *schema.Schema {
 	return &schema.Schema{
 		Type:     schema.TypeList,
 		Optional: true,
@@ -544,6 +544,36 @@ func captchaConfigSchema() *schema.Schema {
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
 				"custom_request_handling": customRequestHandlingSchema(),
+			},
+		},
+	}
+}
+
+func captchaConfigSchema() *schema.Schema {
+	return &schema.Schema{
+		Type:     schema.TypeList,
+		Optional: true,
+		MaxItems: 1,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				"immunity_time": immunityTimeSchema(),
+			},
+		},
+	}
+}
+
+func immunityTimeSchema() *schema.Schema {
+	return &schema.Schema{
+		Type:     schema.TypeList,
+		Optional: true,
+		MaxItems: 1,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				"immunity_time": {
+					Type:         schema.TypeInt,
+					Optional:     true,
+					ValidateFunc: validation.IntBetween(60, 259200),
+				},
 			},
 		},
 	}
@@ -1037,7 +1067,7 @@ func actionToUseSchema() *schema.Schema {
 			Schema: map[string]*schema.Schema{
 				"allow":   allowConfigSchema(),
 				"block":   blockConfigSchema(),
-				"captcha": captchaConfigSchema(),
+				"captcha": captchaActionSchema(),
 				"count":   countConfigSchema(),
 			},
 		},
